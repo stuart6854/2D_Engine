@@ -1,0 +1,18 @@
+# Build Artifacts
+/bin
+
+# IDE Artifacts
+/.vs
+/JSON
+
+# IDE Solution/Project files
+*.sln
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
+
+# Conan Artifacts
+conan.lock
+conanbuildinfo.*
+conaninfo.txt
+graph_info.json

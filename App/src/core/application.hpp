@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core.hpp"
+
 #include <imgui.h>
 #include <vulkan/vulkan.h>
 
@@ -30,7 +32,8 @@ namespace app::core
 
         void exit();
 
-        auto get_time() -> float;
+        auto get_time() -> f32;
+        auto get_delta_time() -> f32;
 
         auto get_window_handle() const
         {
@@ -50,9 +53,12 @@ namespace app::core
         GLFWwindow* m_windowHandle{};
         bool m_isRunning = false;
 
-        float m_deltaTime = 0.0f;
-        float m_frameTime = 0.0f;
-        float m_lastFrameTime = 0.0f;
+        f32 m_deltaTime = 0.0f;
+        f32 m_lastFrameTime = 0.0f;
+
+        u32 m_fpsFrameCount = 0;
+        f32 m_fpsAccumulatedTime = 0.0f;
+        u32 m_fps = 0;
     };
 
 }

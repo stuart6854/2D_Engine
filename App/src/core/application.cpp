@@ -1,5 +1,7 @@
 #include "application.hpp"
 
+#include "core.hpp"
+
 #include "imgui/imgui_impl_vulkan.h"
 #include "imgui/imgui_impl_glfw.h"
 #define GLFW_INCLUDE_NONE
@@ -11,6 +13,7 @@
 
 #include <iostream>
 #include <functional>
+#include <filesystem>
 
 static bool g_isAppRunning;
 
@@ -412,6 +415,8 @@ namespace app::core
 
     void Application::run()
     {
+        LOG_INFO("Current Directory: <{}>", std::filesystem::current_path().string());
+
         m_isRunning = true;
 
         ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
@@ -421,6 +426,19 @@ namespace app::core
         // Main loop
         while (!glfwWindowShouldClose(m_windowHandle) && m_isRunning)
         {
+            float time = get_time();
+            m_deltaTime = time - m_lastFrameTime;
+            m_lastFrameTime = time;
+
+            m_fpsAccumulatedTime += m_deltaTime;
+            m_fpsFrameCount++;
+            if (m_fpsAccumulatedTime >= 1.0f)
+            {
+                m_fps = static_cast<u32>(m_fpsFrameCount / m_fpsAccumulatedTime);
+                m_fpsFrameCount = 0;
+                m_fpsAccumulatedTime = 0.0f;
+            }
+
             // Poll and handle events (inputs, window resize, etc.)
             // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
             // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
@@ -496,6 +514,12 @@ namespace app::core
                 static bool s_ImGuiShowDemo = false;
                 ImGui::ShowDemoWindow(&s_ImGuiShowDemo);
 
+                if (ImGui::Begin("Debug"))
+                {
+                    ImGui::Text("Frame Time: %ims / %ifps", static_cast<u32>(m_deltaTime * 1000.0f), m_fps);
+                    ImGui::Text("Memory Usage (bytes): %i", GetAllocationMetrics().CurrentUsage());
+                }
+
                 ImGui::End();
             }
 
@@ -520,11 +544,6 @@ namespace app::core
             // Present Main Platform Window
             if (!main_is_minimized)
                 FramePresent(wd);
-
-            float time = get_time();
-            m_frameTime = time - m_lastFrameTime;
-            m_deltaTime = glm::min<float>(m_frameTime, 0.0333f);
-            m_lastFrameTime = time;
         }
     }
 
@@ -533,9 +552,14 @@ namespace app::core
         m_isRunning = false;
     }
 
-    auto Application::get_time() -> float
+    auto Application::get_time() -> f32
     {
-        return static_cast<float>(glfwGetTime());
+        return static_cast<f32>(glfwGetTime());
+    }
+
+    auto Application::get_delta_time() -> f32
+    {
+        return m_deltaTime;
     }
 
     auto Application::get_instance() -> VkInstance

@@ -1,3 +1,4 @@
+#include "core/core.hpp"
 #include "core/application.hpp"
 
 #include <memory>

@@ -10,13 +10,13 @@ namespace app::core
     }
 }
 
-void* operator new(sizet size)
+void* operator new(app::sizet size)
 {
     app::core::s_AllocationMetrics.TotalAllocated += size;
     return malloc(size);
 }
 
-void operator delete(void* memory, sizet size)
+void operator delete(void* memory, app::sizet size)
 {
     app::core::s_AllocationMetrics.TotalFreed += size;
     free(memory);

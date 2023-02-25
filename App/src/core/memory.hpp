@@ -18,5 +18,5 @@ namespace app::core
     auto GetAllocationMetrics() -> const AllocationMetrics&;
 }
 
-void* operator new(sizet size);
-void operator delete(void* memory, sizet size);
+void* operator new(app::sizet size);
+void operator delete(void* memory, app::sizet size);

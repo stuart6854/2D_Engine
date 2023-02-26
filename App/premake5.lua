@@ -28,6 +28,12 @@ project "App"
         "$(VULKAN_SDK)/Lib/vulkan-1.lib",
     }
 
+    defines
+    {
+        "GLFW_INCLUDE_NONE",
+        "VK_USE_PLATFORM_WIN32_KHR",
+    }
+
     filter "configurations:Debug"
         targetsuffix "-debug"
         defines { "_DEBUG" }

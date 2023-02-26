@@ -8,6 +8,7 @@
 
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_vulkan.h>
+#include <implot.h>
 
 #define APP_ENABLE_IMGUI
 
@@ -105,6 +106,11 @@ namespace app::gfx
 
             m_pimpl->device.end_single_use_cmd(cmd);
         }
+
+        // Initialize ImPlot
+        {
+            ImPlot::CreateContext();
+        }
 #endif
     }
 
@@ -118,6 +124,7 @@ namespace app::gfx
         m_pimpl->device.wait_idle();
 
 #ifdef APP_ENABLE_IMGUI
+        ImPlot::DestroyContext();
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();

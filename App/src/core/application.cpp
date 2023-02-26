@@ -3,12 +3,11 @@
 #include "core.hpp"
 #include "rendering/renderer.hpp"
 
-#include "imgui/imgui_impl_vulkan.h"
-#include "imgui/imgui_impl_glfw.h"
-#include <GLFW/glfw3.h>
-#include <vulkan/vulkan.h>
-#include <vk_mem_alloc.h>
 #include <glm/glm.hpp>
+#include <imgui.h>
+#include <implot.h>
+
+#include <GLFW/glfw3.h>
 
 #include <iostream>
 #include <functional>
@@ -77,6 +76,9 @@ namespace app::core
 
             static bool s_ImGuiShowDemo = false;
             ImGui::ShowDemoWindow(&s_ImGuiShowDemo);
+
+            static bool s_ImPlotShowDemo = false;
+            ImPlot::ShowDemoWindow(&s_ImPlotShowDemo);
 
             if (ImGui::Begin("Debug"))
             {

@@ -1,12 +1,14 @@
 #pragma once
 
 #include "core.hpp"
+#include "rendering/renderer.hpp"
 
 #include <imgui.h>
 #include <vulkan/vulkan.h>
 
 #include <cstdint>
 #include <string>
+#include <memory>
 #include <functional>
 
 struct GLFWwindow;
@@ -35,14 +37,7 @@ namespace app::core
         auto get_time() -> f32;
         auto get_delta_time() -> f32;
 
-        auto get_window_handle() const
-        {
-            return m_windowHandle;
-        }
-
-        static auto get_instance() -> VkInstance;
-        static auto get_physical_device() -> VkPhysicalDevice;
-        static auto get_device() -> VkDevice;
+        auto get_renderer() const -> const gfx::Renderer&;
 
     private:
         void init();
@@ -50,7 +45,6 @@ namespace app::core
 
     private:
         ApplicationInfo m_appInfo{};
-        GLFWwindow* m_windowHandle{};
         bool m_isRunning = false;
 
         f32 m_deltaTime = 0.0f;
@@ -59,6 +53,8 @@ namespace app::core
         u32 m_fpsFrameCount = 0;
         f32 m_fpsAccumulatedTime = 0.0f;
         u32 m_fps = 0;
+
+        gfx::Renderer m_renderer{};
     };
 
 }

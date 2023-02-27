@@ -12,6 +12,9 @@
 #include <imgui/imgui_impl_vulkan.h>
 #include <implot.h>
 
+#include <glm/ext/matrix_float4x4.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
+
 #define APP_ENABLE_IMGUI
 
 namespace app::gfx
@@ -172,12 +175,33 @@ namespace app::gfx
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+
+        m_pimpl->device.begin_backbuffer_pass({ 0.45f, 0.55f, 0.60f, 1.0f });
+
+        auto cmd = m_pimpl->device.get_current_cmd();
+
+        vk::Viewport viewport{};
+        viewport.setWidth(1600);
+        viewport.setHeight(900);
+        cmd.setViewport(0, viewport);
+
+        vk::Rect2D scissor{};
+        scissor.setExtent({ 1600, 900 });
+        cmd.setScissor(0, scissor);
+
+        bind_shader(m_pimpl->defaultShader.get());
+
+        const float aspect_ratio = 1600.0f / 900.0f;
+        static const float ortho_size = 10.0f * 0.5f;
+        glm::mat4 push_data[2];
+        push_data[0] = glm::orthoLH_ZO(-ortho_size * aspect_ratio, ortho_size * aspect_ratio, -ortho_size, ortho_size, 0.0f, 1.0f);
+        push_data[1] = glm::mat4(1.0f);
+
+        set_push_constants(m_pimpl->defaultShader.get(), sizeof(glm::mat4) * 2, push_data);
     }
 
     void Renderer::end_frame()
     {
-        m_pimpl->device.begin_backbuffer_pass({ 0.45f, 0.55f, 0.60f, 1.0f });
-
         auto cmd = m_pimpl->device.get_current_cmd();
 
         ImGui::Render();

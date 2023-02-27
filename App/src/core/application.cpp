@@ -161,7 +161,7 @@ namespace app::core
     void Application::init()
     {
         m_renderer.init();
-        m_batch2D.init();
+        m_batch2D.init(m_renderer);
     }
 
     void Application::shutdown()

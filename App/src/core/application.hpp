@@ -2,6 +2,7 @@
 
 #include "core.hpp"
 #include "rendering/renderer.hpp"
+#include "rendering/batch_2d.hpp"
 
 #include <imgui.h>
 #include <vulkan/vulkan.h>
@@ -55,6 +56,7 @@ namespace app::core
         u32 m_fps = 0;
 
         gfx::Renderer m_renderer{};
+        gfx::Batch2D m_batch2D{};
     };
 
 }

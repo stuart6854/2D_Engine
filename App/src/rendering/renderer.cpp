@@ -1,6 +1,7 @@
 #include "renderer.hpp"
 
 #include "device.hpp"
+#include "shader.hpp"
 #include "buffer.hpp"
 
 #include <GLFW/glfw3.h>
@@ -32,6 +33,8 @@ namespace app::gfx
         GLFWwindow* windowHandle = nullptr;
 
         Device device{};
+
+        Shared<Shader> defaultShader = nullptr;
     };
 
     Renderer::Renderer() : m_pimpl(new RendererPimpl) {}
@@ -113,6 +116,9 @@ namespace app::gfx
             ImPlot::CreateContext();
         }
 #endif
+
+        m_pimpl->defaultShader = create_shader();
+        m_pimpl->defaultShader->init("../../assets/shaders/default.vert.spv", "../../assets/shaders/default.frag.spv");
     }
 
     void Renderer::shutdown()
@@ -123,6 +129,8 @@ namespace app::gfx
         }
 
         m_pimpl->device.wait_idle();
+
+        m_pimpl->defaultShader = nullptr;
 
 #ifdef APP_ENABLE_IMGUI
         ImPlot::DestroyContext();
@@ -142,6 +150,11 @@ namespace app::gfx
     bool Renderer::has_window_requested_close()
     {
         return glfwWindowShouldClose(m_pimpl->windowHandle);
+    }
+
+    auto Renderer::create_shader() const -> Shared<Shader>
+    {
+        return CreateShared<Shader>(&m_pimpl->device);
     }
 
     auto Renderer::create_buffer() const -> Shared<Buffer>
@@ -178,7 +191,31 @@ namespace app::gfx
         m_pimpl->device.flush_frame();
     }
 
-    void Renderer::draw_indexed(/*Buffer vertex_buffer, Buffer index_buffer, */ u32 index_count)
+    void Renderer::bind_shader(Shader* shader)
+    {
+        if ((shader == nullptr || !shader->is_valid()) && shader != m_pimpl->defaultShader.get())
+        {
+            bind_shader(m_pimpl->defaultShader.get());
+            return;
+        }
+
+        auto cmd = m_pimpl->device.get_current_cmd();
+
+        cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, shader->get_pipeline());
+    }
+
+    void Renderer::set_push_constants(Shader* shader, u32 size, const void* data)
+    {
+        if (shader == nullptr || size == 0 || data == nullptr)
+        {
+            return;
+        }
+
+        auto cmd = m_pimpl->device.get_current_cmd();
+
+        cmd.pushConstants(shader->get_layout(), vk::ShaderStageFlagBits::eVertex, 0, size, data);
+    }
+
     void Renderer::draw_indexed(Buffer* vertex_buffer, Buffer* index_buffer, u32 index_count)
     {
         auto cmd = m_pimpl->device.get_current_cmd();

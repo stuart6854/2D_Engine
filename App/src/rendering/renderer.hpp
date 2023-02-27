@@ -18,6 +18,7 @@ namespace app::gfx
         u32 TriangleCount = 0;
     };
 
+    class Shader;
     class Buffer;
 
     class Renderer
@@ -40,10 +41,15 @@ namespace app::gfx
 
         /* Commands */
 
+        auto create_shader() const -> Shared<Shader>;
         auto create_buffer() const -> Shared<Buffer>;
 
         void new_frame();
         void end_frame();
+
+        void bind_shader(Shader* shader);
+
+        void set_push_constants(Shader* shader, u32 size, const void* data);
 
         void draw_indexed(Buffer* vertex_buffer, Buffer* index_buffer, u32 index_count);
 

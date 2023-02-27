@@ -3,11 +3,14 @@
 #include "core/core.hpp"
 
 #include <vulkan/vulkan.hpp>
+#include <vk_mem_alloc.h>
 
 struct GLFWwindow;
 
 namespace app::gfx
 {
+    class Buffer;
+
     class Device
     {
     public:
@@ -33,6 +36,8 @@ namespace app::gfx
 
         auto get_graphics_family() -> u32;
         auto get_graphics_queue() -> vk::Queue;
+
+        auto get_allocator() const -> VmaAllocator;
 
         auto get_descriptor_pool() -> vk::DescriptorPool;
 

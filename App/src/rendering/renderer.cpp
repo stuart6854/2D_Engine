@@ -1,6 +1,7 @@
 #include "renderer.hpp"
 
 #include "device.hpp"
+#include "buffer.hpp"
 
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -143,6 +144,11 @@ namespace app::gfx
         return glfwWindowShouldClose(m_pimpl->windowHandle);
     }
 
+    auto Renderer::create_buffer() const -> Shared<Buffer>
+    {
+        return CreateShared<Buffer>(&m_pimpl->device);
+    }
+
     void Renderer::new_frame()
     {
         s_renderMetrics.DrawCallCount = 0;
@@ -173,10 +179,11 @@ namespace app::gfx
     }
 
     void Renderer::draw_indexed(/*Buffer vertex_buffer, Buffer index_buffer, */ u32 index_count)
+    void Renderer::draw_indexed(Buffer* vertex_buffer, Buffer* index_buffer, u32 index_count)
     {
         auto cmd = m_pimpl->device.get_current_cmd();
-        // cmd.bindVertexBuffers();
-        // cmd.bindIndexBuffer();
+        cmd.bindVertexBuffers(0, vertex_buffer->get_buffer(), { 0 });
+        cmd.bindIndexBuffer(index_buffer->get_buffer(), 0, vk::IndexType::eUint32);
         cmd.drawIndexed(index_count, 1, 0, 0, 0);
 
         s_renderMetrics.DrawCallCount++;

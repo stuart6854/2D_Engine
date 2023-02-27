@@ -18,6 +18,8 @@ namespace app::gfx
         u32 TriangleCount = 0;
     };
 
+    class Buffer;
+
     class Renderer
     {
     public:
@@ -38,10 +40,12 @@ namespace app::gfx
 
         /* Commands */
 
+        auto create_buffer() const -> Shared<Buffer>;
+
         void new_frame();
         void end_frame();
 
-        void draw_indexed(/*Buffer vertex_buffer, Buffer index_buffer, */ u32 index_count);
+        void draw_indexed(Buffer* vertex_buffer, Buffer* index_buffer, u32 index_count);
 
     private:
         struct RendererPimpl;

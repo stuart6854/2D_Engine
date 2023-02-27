@@ -1,5 +1,7 @@
 #include "device.hpp"
 
+#include "buffer.hpp"
+
 #include <vulkan/vulkan.hpp>
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
@@ -451,6 +453,11 @@ namespace app::gfx
     auto Device::get_graphics_queue() -> vk::Queue
     {
         return m_pimpl->graphicsQueue;
+    }
+
+    auto Device::get_allocator() const -> VmaAllocator
+    {
+        return m_pimpl->allocator;
     }
 
     auto Device::get_descriptor_pool() -> vk::DescriptorPool

@@ -1,0 +1,7 @@
+#pragma once
+
+#define GLM_FORCE_XYZW_ONLY
+
+#define GLFW_INCLUDE_NONE
+
+#define VK_USE_PLATFORM_WIN32_KHR

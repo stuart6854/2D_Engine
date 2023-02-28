@@ -30,8 +30,6 @@ project "App"
 
     defines
     {
-        "GLFW_INCLUDE_NONE",
-        "VK_USE_PLATFORM_WIN32_KHR",
     }
 
     filter "configurations:Debug"

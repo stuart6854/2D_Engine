@@ -3,6 +3,7 @@
 #include "device.hpp"
 #include "shader.hpp"
 #include "buffer.hpp"
+#include "texture.hpp"
 
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -163,6 +164,11 @@ namespace app::gfx
     auto Renderer::create_buffer() const -> Shared<Buffer>
     {
         return CreateShared<Buffer>(&m_pimpl->device);
+    }
+
+    auto Renderer::create_texture() const -> Shared<Texture>
+    {
+        return CreateShared<Texture>(&m_pimpl->device);
     }
 
     void Renderer::new_frame()

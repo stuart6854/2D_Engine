@@ -53,6 +53,8 @@ namespace app::gfx
         auto begin_single_use_cmd() -> vk::CommandBuffer;
         void end_single_use_cmd(vk::CommandBuffer cmd);
 
+        void upload_to_image(vk::Image image, vk::Extent3D image_extent, sizet size, const void* data);
+
         void new_frame();
         void flush_frame();
 

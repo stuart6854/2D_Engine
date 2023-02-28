@@ -20,6 +20,7 @@ namespace app::gfx
 
     class Shader;
     class Buffer;
+    class Texture;
 
     class Renderer
     {
@@ -43,6 +44,7 @@ namespace app::gfx
 
         auto create_shader() const -> Shared<Shader>;
         auto create_buffer() const -> Shared<Buffer>;
+        auto create_texture() const -> Shared<Texture>;
 
         void new_frame();
         void end_frame();

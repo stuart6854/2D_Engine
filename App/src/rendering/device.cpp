@@ -211,6 +211,28 @@ namespace app::gfx
             }
         }
 
+        auto create_staging_buffer(VmaAllocator allocator, sizet size, const void* data) -> std::pair<vk::Buffer, VmaAllocation>
+        {
+            VkBufferCreateInfo buffer_info = vk::BufferCreateInfo();
+            buffer_info.size = size;
+            buffer_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+            VmaAllocationCreateInfo alloc_info{};
+            alloc_info.usage = VMA_MEMORY_USAGE_AUTO;
+            alloc_info.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+
+            VkBuffer vkBuffer = nullptr;
+            VmaAllocation allocation = nullptr;
+            vmaCreateBuffer(allocator, &buffer_info, &alloc_info, &vkBuffer, &allocation, nullptr);
+
+            void* mapped_data = nullptr;
+            vmaMapMemory(allocator, allocation, &mapped_data);
+            std::memcpy(mapped_data, data, size);
+            vmaUnmapMemory(allocator, allocation);
+
+            return { vkBuffer, allocation };
+        }
+
         void transition_image(vk::CommandBuffer cmd,
                               vk::Image image,
                               vk::ImageLayout oldLayout,
@@ -514,6 +536,57 @@ namespace app::gfx
 
         m_pimpl->device.destroy(fence);
         m_pimpl->device.freeCommandBuffers(m_pimpl->cmdPool, cmd);
+    }
+
+    void Device::upload_to_image(vk::Image image, vk::Extent3D image_extent, sizet size, const void* data)
+    {
+        auto [staging_buffer, staging_buffer_alloc] = create_staging_buffer(m_pimpl->allocator, size, data);
+
+        auto cmd = begin_single_use_cmd();
+
+        {
+            vk::ImageMemoryBarrier barrier{};
+            barrier.srcAccessMask = {};
+            barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+            barrier.oldLayout = vk::ImageLayout::eUndefined;
+            barrier.newLayout = vk::ImageLayout::eTransferDstOptimal;
+            barrier.image = image;
+            barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+            barrier.subresourceRange.baseArrayLayer = 0;
+            barrier.subresourceRange.layerCount = 1;
+            barrier.subresourceRange.baseMipLevel = 0;
+            barrier.subresourceRange.levelCount = 1;
+
+            cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, barrier);
+        }
+
+        vk::BufferImageCopy region{};
+        region.imageExtent = image_extent;
+        region.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+        region.imageSubresource.mipLevel = 0;
+        cmd.copyBufferToImage(staging_buffer, image, vk::ImageLayout::eTransferDstOptimal, region);
+
+        {
+            vk::ImageMemoryBarrier barrier{};
+            barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+            barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
+            barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+            barrier.image = image;
+            barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+            barrier.subresourceRange.baseArrayLayer = 0;
+            barrier.subresourceRange.layerCount = 1;
+            barrier.subresourceRange.baseMipLevel = 0;
+            barrier.subresourceRange.levelCount = 1;
+
+            cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, {}, {}, barrier);
+        }
+
+        end_single_use_cmd(cmd);
+
+        vmaDestroyBuffer(m_pimpl->allocator, staging_buffer, staging_buffer_alloc);
     }
 
     void Device::new_frame()

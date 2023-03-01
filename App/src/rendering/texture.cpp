@@ -65,7 +65,7 @@ namespace app::gfx
         vmaCreateImage(allocator, &vk_image_info, &alloc_info, &vk_image, &m_pimpl->allocation, nullptr);
         m_pimpl->image = vk_image;
 
-        sizet data_size = static_cast<sizet>(w * h * 4);
+        auto data_size = static_cast<sizet>(w * h * 4);
         m_pimpl->device->upload_to_image(m_pimpl->image, image_info.extent, data_size, data);
 
         vk::ImageViewCreateInfo view_info{};
@@ -78,6 +78,26 @@ namespace app::gfx
         view_info.subresourceRange.baseMipLevel = 0;
         view_info.subresourceRange.levelCount = 1;
         m_pimpl->view = device.createImageView(view_info);
+
+        const auto layout = m_pimpl->device->get_texture_set_layout();
+        vk::DescriptorSetAllocateInfo set_info{};
+        set_info.descriptorSetCount = 1;
+        set_info.descriptorPool = m_pimpl->device->get_descriptor_pool();
+        set_info.setSetLayouts(layout);
+        m_pimpl->set = device.allocateDescriptorSets(set_info)[0];
+
+        vk::DescriptorImageInfo set_image_info{};
+        set_image_info.setImageView(m_pimpl->view);
+        set_image_info.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+        set_image_info.setSampler(m_pimpl->device->get_nearest_sampler());
+
+        vk::WriteDescriptorSet write{};
+        write.setDescriptorCount(1);
+        write.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
+        write.setDstBinding(0);
+        write.setDstSet(m_pimpl->set);
+        write.setImageInfo(set_image_info);
+        device.updateDescriptorSets(write, {});
     }
 
     void Texture::destroy()
@@ -100,6 +120,26 @@ namespace app::gfx
         m_pimpl->view = nullptr;
         m_pimpl->width = 0;
         m_pimpl->height = 0;
+    }
+
+    bool Texture::is_valid() const
+    {
+        return m_pimpl->image && m_pimpl->set;
+    }
+
+    auto Texture::get_width() const -> u32
+    {
+        return m_pimpl->width;
+    }
+
+    auto Texture::get_height() const -> u32
+    {
+        return m_pimpl->height;
+    }
+
+    auto Texture::get_set() const -> vk::DescriptorSet
+    {
+        return m_pimpl->set;
     }
 
 }

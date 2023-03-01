@@ -37,6 +37,10 @@ namespace app::gfx
         vk::Queue graphicsQueue{};
 
         vk::DescriptorPool descriptorPool{};
+        vk::DescriptorSetLayout textureSetLayout{};
+
+        vk::Sampler nearestSampler{};
+        vk::Sampler linearSampler{};
 
         vk::CommandPool cmdPool{};
 
@@ -378,6 +382,33 @@ namespace app::gfx
             pool_info.setMaxSets(1000);
             pool_info.setPoolSizes(pool_sizes);
             m_pimpl->descriptorPool = m_pimpl->device.createDescriptorPool(pool_info);
+
+            {
+                vk::DescriptorSetLayoutBinding binding{};
+                binding.setBinding(0);
+                binding.setDescriptorCount(1);
+                binding.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
+                binding.setStageFlags(vk::ShaderStageFlagBits::eFragment);
+
+                vk::DescriptorSetLayoutCreateInfo layout_info{};
+                layout_info.setBindings(binding);
+                m_pimpl->textureSetLayout = m_pimpl->device.createDescriptorSetLayout(layout_info);
+            }
+        }
+
+        // Create samplers
+        {
+            vk::SamplerCreateInfo sampler_info{};
+            sampler_info.setAddressModeU(vk::SamplerAddressMode::eRepeat);
+            sampler_info.setAddressModeV(vk::SamplerAddressMode::eRepeat);
+            sampler_info.setAddressModeW(vk::SamplerAddressMode::eRepeat);
+            sampler_info.setMinFilter(vk::Filter::eNearest);
+            sampler_info.setMagFilter(vk::Filter::eNearest);
+            m_pimpl->nearestSampler = m_pimpl->device.createSampler(sampler_info);
+
+            sampler_info.setMinFilter(vk::Filter::eLinear);
+            sampler_info.setMagFilter(vk::Filter::eLinear);
+            m_pimpl->linearSampler = m_pimpl->device.createSampler(sampler_info);
         }
 
         // Create command pool
@@ -439,6 +470,10 @@ namespace app::gfx
         }
 
         m_pimpl->device.destroy(m_pimpl->cmdPool);
+
+        m_pimpl->device.destroy(m_pimpl->nearestSampler);
+        m_pimpl->device.destroy(m_pimpl->linearSampler);
+
         m_pimpl->device.destroy(m_pimpl->descriptorPool);
 
         vmaDestroyAllocator(m_pimpl->allocator);
@@ -485,6 +520,21 @@ namespace app::gfx
     auto Device::get_descriptor_pool() -> vk::DescriptorPool
     {
         return m_pimpl->descriptorPool;
+    }
+
+    auto Device::get_texture_set_layout() -> vk::DescriptorSetLayout
+    {
+        return m_pimpl->textureSetLayout;
+    }
+
+    auto Device::get_nearest_sampler() -> vk::Sampler
+    {
+        return m_pimpl->nearestSampler;
+    }
+
+    auto Device::get_linear_sampler() -> vk::Sampler
+    {
+        return m_pimpl->linearSampler;
     }
 
     auto Device::get_swapchain_format() -> vk::Format

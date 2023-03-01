@@ -41,6 +41,11 @@ namespace app::gfx
 
         auto get_descriptor_pool() -> vk::DescriptorPool;
 
+        auto get_texture_set_layout() -> vk::DescriptorSetLayout;
+
+        auto get_nearest_sampler() -> vk::Sampler;
+        auto get_linear_sampler() -> vk::Sampler;
+
         auto get_swapchain_format() -> vk::Format;
         auto get_swapchain_image_count() -> u32;
 

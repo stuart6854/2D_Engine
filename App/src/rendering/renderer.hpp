@@ -50,6 +50,7 @@ namespace app::gfx
         void end_frame();
 
         void bind_shader(Shader* shader);
+        void bind_texture(Shader* shader, Texture* texture);
 
         void set_push_constants(Shader* shader, u32 size, const void* data);
 

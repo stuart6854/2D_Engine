@@ -7,6 +7,7 @@ vulkan-memory-allocator/3.0.1
 stb/cci.20220909
 imgui/cci.20230105+1.89.2.docking
 implot/0.14
+nlohmann_json/3.11.2
 
 [options]
 fmt:header_only=True

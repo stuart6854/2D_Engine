@@ -223,15 +223,23 @@ namespace app::gfx
 
     void Renderer::bind_shader(Shader* shader)
     {
-        if ((shader == nullptr || !shader->is_valid()) && shader != m_pimpl->defaultShader.get())
-        {
-            bind_shader(m_pimpl->defaultShader.get());
-            return;
-        }
+        ASSERT(shader != nullptr && shader->is_valid());
 
         auto cmd = m_pimpl->device.get_current_cmd();
 
         cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, shader->get_pipeline());
+    }
+
+    void Renderer::bind_texture(Shader* shader, Texture* texture)
+    {
+        ASSERT(shader != nullptr && shader->is_valid());
+        ASSERT(texture != nullptr && texture->is_valid());
+
+        auto cmd = m_pimpl->device.get_current_cmd();
+
+        auto layout = shader->get_layout();
+        auto sets = { texture->get_set() };
+        cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, layout, 0, sets, {});
     }
 
     void Renderer::set_push_constants(Shader* shader, u32 size, const void* data)

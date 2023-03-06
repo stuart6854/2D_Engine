@@ -2,6 +2,8 @@
 
 #include "core/core.hpp"
 
+struct GLFWwindow;
+
 namespace app::gfx
 {
     struct RenderMetrics
@@ -38,6 +40,8 @@ namespace app::gfx
 
         /* Getters */
 
+        auto get_window_handle() const -> GLFWwindow*;
+
         bool has_window_requested_close();
 
         /* Commands */
@@ -46,7 +50,7 @@ namespace app::gfx
         auto create_buffer() const -> Shared<Buffer>;
         auto create_texture() const -> Shared<Texture>;
 
-        void new_frame();
+        void new_frame(const glm::vec3 cam_pos, f32 cam_ortho_size);
         void end_frame();
 
         void bind_shader(Shader* shader);

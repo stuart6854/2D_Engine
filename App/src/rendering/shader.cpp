@@ -68,17 +68,10 @@ namespace app::gfx
             const_range.setSize(sizeof(glm::mat4) * 2);
             const_range.setStageFlags(vk::ShaderStageFlagBits::eVertex);
 
-            vk::DescriptorSetLayoutBinding binding{};
-            binding.setBinding(0);
-            binding.setDescriptorCount(32);
-            binding.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
-            binding.setStageFlags(vk::ShaderStageFlagBits::eFragment);
-
-            vk::DescriptorSetLayoutCreateInfo set_info{};
-            set_info.setBindings(binding);
-
+            auto set_layout = m_pimpl->device->get_texture_set_layout();
             vk::PipelineLayoutCreateInfo layout_info{};
             layout_info.setPushConstantRanges(const_range);
+            layout_info.setSetLayouts(set_layout);
             m_pimpl->layout = device.createPipelineLayout(layout_info);
         }
 
@@ -111,28 +104,20 @@ namespace app::gfx
 
         std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = { vertShaderStageInfo, fragShaderStageInfo };
 
-        std::vector<vk::VertexInputAttributeDescription> attributes(4);
+        std::vector<vk::VertexInputAttributeDescription> attributes(2);
         attributes[0].setBinding(0);
         attributes[0].setLocation(0);
-        attributes[0].setFormat(vk::Format::eR32G32B32Sfloat);
+        attributes[0].setFormat(vk::Format::eR32G32Sfloat);
         attributes[0].setOffset(0);
         attributes[1].setBinding(0);
         attributes[1].setLocation(1);
-        attributes[1].setFormat(vk::Format::eR32G32B32A32Sfloat);
-        attributes[1].setOffset(12);
-        attributes[2].setBinding(0);
-        attributes[2].setLocation(2);
-        attributes[2].setFormat(vk::Format::eR32G32Sfloat);
-        attributes[2].setOffset(28);
-        attributes[3].setBinding(0);
-        attributes[3].setLocation(3);
-        attributes[3].setFormat(vk::Format::eR32Sfloat);
-        attributes[3].setOffset(36);
+        attributes[1].setFormat(vk::Format::eR32G32Sfloat);
+        attributes[1].setOffset(8);
 
         vk::VertexInputBindingDescription binding{};
         binding.setBinding(0);
         binding.setInputRate(vk::VertexInputRate::eVertex);
-        binding.setStride(40);
+        binding.setStride(16);
 
         vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
         if (!attributes.empty())

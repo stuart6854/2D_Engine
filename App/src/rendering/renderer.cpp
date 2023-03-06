@@ -14,6 +14,7 @@
 #include <implot.h>
 
 #include <glm/ext/matrix_float4x4.hpp>
+#include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 
 #define APP_ENABLE_IMGUI
@@ -88,7 +89,6 @@ namespace app::gfx
             }
 
             // Setup Platform/Renderer backends
-            ImGui_ImplGlfw_InitForVulkan(m_pimpl->windowHandle, true);
             ImGui_ImplVulkan_InitInfo init_info = {};
             init_info.Instance = m_pimpl->device.get_instance();
             init_info.PhysicalDevice = m_pimpl->device.get_physical_device();
@@ -151,6 +151,11 @@ namespace app::gfx
         glfwTerminate();
     }
 
+    auto Renderer::get_window_handle() const -> GLFWwindow*
+    {
+        return m_pimpl->windowHandle;
+    }
+
     bool Renderer::has_window_requested_close()
     {
         return glfwWindowShouldClose(m_pimpl->windowHandle);
@@ -171,7 +176,7 @@ namespace app::gfx
         return CreateShared<Texture>(&m_pimpl->device);
     }
 
-    void Renderer::new_frame()
+    void Renderer::new_frame(const glm::vec3 cam_pos, f32 cam_ortho_size)
     {
         s_renderMetrics.DrawCallCount = 0;
         s_renderMetrics.TriangleCount = 0;
@@ -198,9 +203,10 @@ namespace app::gfx
         bind_shader(m_pimpl->defaultShader.get());
 
         const float aspect_ratio = 1600.0f / 900.0f;
-        static const float ortho_size = 10.0f * 0.5f;
         glm::mat4 push_data[2];
-        push_data[0] = glm::orthoLH_ZO(-ortho_size * aspect_ratio, ortho_size * aspect_ratio, -ortho_size, ortho_size, 0.0f, 1.0f);
+        push_data[0] =
+            glm::orthoLH_ZO(-cam_ortho_size * aspect_ratio, cam_ortho_size * aspect_ratio, -cam_ortho_size, cam_ortho_size, 0.0f, 1.0f) *
+            glm::inverse(glm::translate(glm::mat4(1.0f), cam_pos));
         push_data[1] = glm::mat4(1.0f);
 
         set_push_constants(m_pimpl->defaultShader.get(), sizeof(glm::mat4) * 2, push_data);
@@ -256,6 +262,9 @@ namespace app::gfx
 
     void Renderer::draw_indexed(Buffer* vertex_buffer, Buffer* index_buffer, u32 index_count)
     {
+        if (index_count == 0)
+            return;
+
         auto cmd = m_pimpl->device.get_current_cmd();
         cmd.bindVertexBuffers(0, vertex_buffer->get_buffer(), { 0 });
         cmd.bindIndexBuffer(index_buffer->get_buffer(), 0, vk::IndexType::eUint32);

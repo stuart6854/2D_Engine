@@ -3,6 +3,10 @@
 #include "core.hpp"
 #include "rendering/renderer.hpp"
 #include "rendering/batch_2d.hpp"
+#include "input/input.hpp"
+#include "game/world.hpp"
+#include "game/world_generator.hpp"
+#include "game/world_renderer.hpp"
 
 #include <imgui.h>
 #include <vulkan/vulkan.h>
@@ -57,6 +61,12 @@ namespace app::core
 
         gfx::Renderer m_renderer{};
         gfx::Batch2D m_batch2D{};
+
+        input::Input m_input{};
+
+        game::World m_world{};
+        game::WorldGenerator m_worldGenerator{};
+        game::WorldRenderer m_worldRenderer{};
     };
 
 }

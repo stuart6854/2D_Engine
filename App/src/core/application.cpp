@@ -4,6 +4,7 @@
 #include "rendering/renderer.hpp"
 
 #include <glm/glm.hpp>
+
 #include <imgui.h>
 #include <implot.h>
 
@@ -70,6 +71,47 @@ void draw_cpu_frame_graph(app::f32 time, app::f32 delta_time)
 
 namespace app::core
 {
+    f32 cam_move_speed = 0.1f;
+    f32 cam_move_time = 10.0f;
+    glm::vec3 cam_pos{ 32, 32, 0 };
+    glm::vec3 cam_pos_target = cam_pos;
+
+    f32 cam_zoom_speed = 10.0f;
+    f32 cam_ortho_size = 32.0f;
+    f32 cam_ortho_size_target = cam_ortho_size;
+    f32 cam_max_zoom = 2.0f;
+    f32 cam_min_zoom = 100.0f;
+
+    void handle_camera_input(input::Input& input, f32 delta_time)
+    {
+        // Movement
+        if (input.on_key_held(GLFW_KEY_W))
+        {
+            cam_pos_target.y -= cam_move_speed;
+        }
+        if (input.on_key_held(GLFW_KEY_S))
+        {
+            cam_pos_target.y += cam_move_speed;
+        }
+        if (input.on_key_held(GLFW_KEY_D))
+        {
+            cam_pos_target.x += cam_move_speed;
+        }
+        if (input.on_key_held(GLFW_KEY_A))
+        {
+            cam_pos_target.x -= cam_move_speed;
+        }
+        cam_pos = glm::mix(cam_pos, cam_pos_target, delta_time * cam_move_time);
+
+        // Zoom
+        if (glm::abs(input.get_scroll_amount()) > 0.01f)
+        {
+            cam_ortho_size_target += -input.get_scroll_amount() * cam_zoom_speed;
+            cam_ortho_size_target = glm::clamp(cam_ortho_size_target, cam_max_zoom, cam_min_zoom);
+        }
+        cam_ortho_size = glm::mix(cam_ortho_size, cam_ortho_size_target, delta_time * cam_move_time);
+    }
+
     Application::Application(const ApplicationInfo& app_info) : m_appInfo(app_info)
     {
         s_Instance = this;
@@ -93,6 +135,14 @@ namespace app::core
 
         m_isRunning = true;
 
+        m_world.set_tile_size(1.0f);
+        m_world.set_world_size(64, 64);
+
+        m_worldGenerator.set_world(m_world);
+
+        m_worldRenderer.init(m_renderer);
+        m_worldRenderer.set_world(m_world);
+
         // Main loop
         while (m_isRunning && !m_renderer.has_window_requested_close())
         {
@@ -109,11 +159,14 @@ namespace app::core
                 m_fpsAccumulatedTime = 0.0f;
             }
 
-            glfwPollEvents();
+            m_input.new_frame();
 
-            m_renderer.new_frame();
+            handle_camera_input(m_input, m_deltaTime);
 
-            m_batch2D.begin_batch();
+            m_renderer.new_frame(cam_pos, cam_ortho_size);
+            m_worldRenderer.render();
+
+            /*m_batch2D.begin_batch();
             for (f32 y = -10.0f; y < 10.0f; y += 0.25f)
             {
                 for (f32 x = -10.0f; x < 10.0f; x += 0.25f)
@@ -123,7 +176,7 @@ namespace app::core
                 }
             }
             m_batch2D.end_batch();
-            m_batch2D.flush();
+            m_batch2D.flush();*/
 
             static bool s_ImGuiShowDemo = false;
             ImGui::ShowDemoWindow(&s_ImGuiShowDemo);
@@ -137,6 +190,53 @@ namespace app::core
                 ImGui::Text("Memory Usage (bytes): %i", GetAllocationMetrics().CurrentUsage());
 
                 draw_cpu_frame_graph(get_time(), get_delta_time());
+            }
+
+            if (ImGui::Begin("Game"))
+            {
+                if (ImGui::CollapsingHeader("Camera"))
+                {
+                    ImGui::DragFloat("Move Speed", &cam_move_speed);
+                    ImGui::DragFloat("Move Time", &cam_move_time);
+
+                    if (ImGui::DragFloat2("Position", &cam_pos.x))
+                    {
+                        cam_pos_target = cam_pos;
+                    }
+                    ImGui::DragFloat("Zoom", &cam_ortho_size);
+                }
+            }
+
+            if (ImGui::Begin("World"))
+            {
+                static i32 steps = 1;
+                ImGui::DragInt("Steps", &steps, 1.0f, 1, 10);
+
+                if (ImGui::Button("Generate"))
+                {
+                    m_worldGenerator.reset();
+                    m_worldGenerator.generate(steps);
+                    m_worldRenderer.force_rebuild();
+                }
+
+                if (ImGui::Button("Step"))
+                {
+                    m_worldGenerator.step();
+                    m_worldRenderer.force_rebuild();
+                }
+
+                if (ImGui::Button("Reset"))
+                {
+                    m_worldGenerator.reset();
+                    m_worldRenderer.force_rebuild();
+                }
+
+                ImGui::Separator();
+
+                ImGui::Text("Rendering");
+
+                ImGui::Text("Vertices: %i", m_worldRenderer.get_vertex_count());
+                ImGui::Text("Triangles: %i", m_worldRenderer.get_triangle_count());
             }
 
             m_renderer.end_frame();
@@ -162,10 +262,14 @@ namespace app::core
     {
         m_renderer.init();
         m_batch2D.init(m_renderer);
+
+        m_input.init(m_renderer.get_window_handle());
     }
 
     void Application::shutdown()
     {
+        m_input.shutdown();
+
         m_batch2D.shutdown();
         m_renderer.shutdown();
 
